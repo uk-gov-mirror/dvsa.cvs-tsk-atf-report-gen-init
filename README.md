@@ -1,0 +1,1 @@
+# cvs-tsk-atf-report-gen-init
