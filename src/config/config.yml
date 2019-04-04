@@ -8,4 +8,4 @@ sqs:
   remote:
     params:
       apiVersion: "2012-11-05"
-    queueName: atf-gen-q
+    queueName: atf-report-gen-${BRANCH}-queue
