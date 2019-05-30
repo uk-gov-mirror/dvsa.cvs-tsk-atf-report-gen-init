@@ -31,9 +31,9 @@ class SQMockClient {
 
                     if (foundQueue) {
                         resolve({ QueueUrl: foundQueue.queueURL });
+                    } else {
+                        reject(new Error(`Queue ${params.QueueName} was not found.`));
                     }
-
-                    reject(new Error(`Queue ${params.QueueName} was not found.`));
                 });
             }
         };

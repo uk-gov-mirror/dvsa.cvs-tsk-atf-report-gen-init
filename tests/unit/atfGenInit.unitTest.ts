@@ -9,6 +9,7 @@ import {StreamService} from "../../src/services/StreamService";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {ReceiveMessageResult, SendMessageResult} from "aws-sdk/clients/sqs";
 import {AWSError} from "aws-sdk";
+import {Configuration} from "../../src/utils/Configuration";
 
 describe("atf-gen-init", () => {
     const event: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/stream-event.json"), "utf8"));
@@ -39,9 +40,12 @@ describe("atf-gen-init", () => {
     });
 
     context("SQService", () => {
+        let config: any = Configuration.getInstance().getConfig();
+        const env: string = (!process.env.BRANCH || process.env.BRANCH === "local") ? "local" : "remote";
+        config = config.sqs[env];
         const sqService: SQService = Injector.resolve<SQService>(SQService, [SQMockClient]);
         sqService.sqsClient.createQueue({
-            QueueName: "atf-gen-q"
+            QueueName: config.queueName
         });
 
         context("when adding a record to the queue", () => {
