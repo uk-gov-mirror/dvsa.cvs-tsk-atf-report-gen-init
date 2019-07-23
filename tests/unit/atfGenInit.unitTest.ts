@@ -30,9 +30,9 @@ describe("atf-gen-init", () => {
             }
         ];
 
-        context("when fetching an activity stream", () => {
-            it("should result in an array of filtered js objects", () => {
-                processedEvent = StreamService.getActivitiesStream(event);
+        context("when fetching an activity stream with both visits and wait times", () => {
+            it("should result in an array of filtered js objects containing only visits", () => {
+                processedEvent = StreamService.getVisitsStream(event);
                 expect(processedEvent).to.eql(expectedResult);
             });
         });

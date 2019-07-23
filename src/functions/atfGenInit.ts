@@ -18,8 +18,8 @@ const atfGenInit: Handler = async (event: any, context?: Context, callback?: Cal
         return;
     }
 
-    // Convert the received event into a readable array of filtered test results
-    const records: any[] = StreamService.getActivitiesStream(event);
+    // Convert the received event into a readable array of filtered visits
+    const records: any[] = StreamService.getVisitsStream(event);
 
     // Instantiate the Simple Queue Service
     const sqService: SQService = Injector.resolve<SQService>(SQService);
@@ -27,9 +27,7 @@ const atfGenInit: Handler = async (event: any, context?: Context, callback?: Cal
 
     // Add each visit record to the queue
     records.forEach(async (record: any) => {
-        if (record.activityType === "visit") {
             sendMessagePromises.push(sqService.sendMessage(JSON.stringify(record)));
-        }
     });
 
     return Promise.all(sendMessagePromises)
