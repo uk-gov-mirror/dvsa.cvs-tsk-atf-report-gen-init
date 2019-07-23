@@ -1,4 +1,4 @@
-import {Callback, Context, Handler} from "aws-lambda";
+import {Callback, Context, DynamoDBRecord, Handler, SQSEvent} from "aws-lambda";
 import {AWSError} from "aws-sdk";
 import {Injector} from "../models/injector/Injector";
 import {SQService} from "../services/SQService";
@@ -12,22 +12,22 @@ import {StreamService} from "../services/StreamService";
  * @param context - λ Context
  * @param callback - callback function
  */
-const atfGenInit: Handler = async (event: any, context?: Context, callback?: Callback): Promise<void | Array<PromiseResult<SendMessageResult, AWSError>>> => {
+const atfGenInit: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<void | Array<PromiseResult<SendMessageResult, AWSError>>> => {
     if (!event) {
         console.error("ERROR: event is not defined.");
         return;
     }
 
-    // Convert the received event into a readable array of filtered test results
-    const records: any[] = StreamService.getActivitiesStream(event);
+    // Convert the received event into a readable array of filtered visits
+    const records: DynamoDBRecord[] = StreamService.getVisitsStream(event);
 
     // Instantiate the Simple Queue Service
     const sqService: SQService = Injector.resolve<SQService>(SQService);
     const sendMessagePromises: Array<Promise<PromiseResult<SendMessageResult, AWSError>>> = [];
 
-    // Add each record to the queue
-    records.forEach(async (record: any) => {
-        sendMessagePromises.push(sqService.sendMessage(JSON.stringify(record)));
+    // Add each visit record to the queue
+    records.forEach(async (record: DynamoDBRecord) => {
+            sendMessagePromises.push(sqService.sendMessage(JSON.stringify(record)));
     });
 
     return Promise.all(sendMessagePromises)
