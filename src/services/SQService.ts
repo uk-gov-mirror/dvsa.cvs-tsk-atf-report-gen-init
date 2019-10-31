@@ -1,5 +1,4 @@
 import SQS, {GetQueueUrlResult, MessageBodyAttributeMap, ReceiveMessageResult, SendMessageResult} from "aws-sdk/clients/sqs";
-import {Service} from "../models/injector/ServiceDecorator";
 import {Configuration} from "../utils/Configuration";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {AWSError, config as AWSConfig} from "aws-sdk";
@@ -10,7 +9,6 @@ const AWSXRay = require("aws-xray-sdk");
 /**
  * Service class for interfacing with the Simple Queue Service
  */
-@Service()
 class SQService {
     public readonly sqsClient: SQS;
     private readonly config: any;

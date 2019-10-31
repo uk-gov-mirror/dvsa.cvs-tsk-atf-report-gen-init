@@ -1,6 +1,5 @@
 import {Callback, Context, DynamoDBRecord, Handler, SQSEvent} from "aws-lambda";
-import {AWSError} from "aws-sdk";
-import {Injector} from "../models/injector/Injector";
+import {AWSError, SQS} from "aws-sdk";
 import {SQService} from "../services/SQService";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {SendMessageResult} from "aws-sdk/clients/sqs";
@@ -12,7 +11,7 @@ import {StreamService} from "../services/StreamService";
  * @param context - λ Context
  * @param callback - callback function
  */
-const atfGenInit: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<void | Array<PromiseResult<SendMessageResult, AWSError>>> => {
+const atfGenInit: Handler = async (event: SQSEvent): Promise<void | Array<PromiseResult<SendMessageResult, AWSError>>> => {
     if (!event) {
         console.error("ERROR: event is not defined.");
         return;
@@ -22,7 +21,7 @@ const atfGenInit: Handler = async (event: SQSEvent, context?: Context, callback?
     const records: DynamoDBRecord[] = StreamService.getVisitsStream(event);
 
     // Instantiate the Simple Queue Service
-    const sqService: SQService = Injector.resolve<SQService>(SQService);
+    const sqService: SQService = new SQService(new SQS());
     const sendMessagePromises: Array<Promise<PromiseResult<SendMessageResult, AWSError>>> = [];
 
     // Add each visit record to the queue

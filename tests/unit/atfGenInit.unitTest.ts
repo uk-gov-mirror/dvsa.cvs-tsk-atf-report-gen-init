@@ -1,17 +1,13 @@
-import {describe} from "mocha";
-import {expect} from "chai";
-import {Injector} from "../../src/models/injector/Injector";
 import {SQService} from "../../src/services/SQService";
-import {SQMockClient} from "../models/SQMockClient";
-import * as fs from "fs";
-import * as path from "path";
 import {StreamService} from "../../src/services/StreamService";
 import {PromiseResult} from "aws-sdk/lib/request";
-import {ReceiveMessageResult, SendMessageResult} from "aws-sdk/clients/sqs";
+import {SendMessageResult} from "aws-sdk/clients/sqs";
 import {AWSError} from "aws-sdk";
+import event from "../resources/stream-event.json";
+import SQS = require("aws-sdk/clients/sqs");
+jest.mock("aws-sdk/clients/sqs");
 
 describe("atf-gen-init", () => {
-    const event: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/stream-event.json"), "utf8"));
     let processedEvent: any;
 
     context("StreamService", () => {
@@ -33,38 +29,40 @@ describe("atf-gen-init", () => {
         context("when fetching an activity stream with both visits and wait times", () => {
             it("should result in an array of filtered js objects containing only visits", () => {
                 processedEvent = StreamService.getVisitsStream(event);
-                expect(processedEvent).to.eql(expectedResult);
+                expect(processedEvent).toEqual(expectedResult);
             });
         });
     });
 
     context("SQService", () => {
-        const sqService: SQService = Injector.resolve<SQService>(SQService, [SQMockClient]);
-        sqService.sqsClient.createQueue({
-            QueueName: "atf-gen-q"
-        });
+        context("when invoking sendMessage", () => {
+            it("should call the AWS SQS sendMessage function with expected params", async () => {
+                SQS.prototype.getQueueUrl = jest.fn().mockReturnValue({promise: () => Promise.resolve({ QueueUrl: "aQueueUrl" })});
+                const sendMessageMock = jest.fn().mockReturnValue({ promise: () => { return; }});
+                SQS.prototype.sendMessage = sendMessageMock;
 
-        context("when adding a record to the queue", () => {
-            it("should successfully add the records to the queue", () => {
+                const sqService: SQService = new SQService(new SQS());
                 const sendMessagePromises: Array<Promise<PromiseResult<SendMessageResult, AWSError>>> = [];
 
-                processedEvent.forEach(async (record: any) => {
+                event.Records.forEach(async (record: any) => {
                     sendMessagePromises.push(sqService.sendMessage(JSON.stringify(record)));
                 });
 
-                return Promise.all(sendMessagePromises)
-                .catch((error: AWSError) => {
-                    console.error(error);
-                    expect.fail();
-                });
+                expect.assertions(3);
+                await Promise.all(sendMessagePromises);
+                expect(sendMessageMock).toHaveBeenCalledTimes(2);
+                expect(sendMessageMock).toHaveBeenNthCalledWith(1, {MessageBody: JSON.stringify(event.Records[0]), QueueUrl: "aQueueUrl"});
+                expect(sendMessageMock).toHaveBeenNthCalledWith(2, {MessageBody: JSON.stringify(event.Records[1]), QueueUrl: "aQueueUrl"});
             });
 
-            it("should successfully read the added records from the queue", () => {
-                return sqService.getMessages()
-                .then((messages: ReceiveMessageResult) => {
-                    expect(messages.Messages!.map((message) => JSON.parse(message.Body as string))).to.eql(processedEvent);
-                });
-            });
+            // Not really testable, and wasn't meaningful when it was
+            //
+            // it("should successfully read the added records from the queue", () => {
+            //     return sqService.getMessages()
+            //     .then((messages: ReceiveMessageResult) => {
+            //         expect(messages.Messages!.map((message) => JSON.parse(message.Body as string))).toEqual(processedEvent);
+            //     });
+            // });
         });
     });
 });
