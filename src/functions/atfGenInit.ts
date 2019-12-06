@@ -33,6 +33,7 @@ const atfGenInit: Handler = async (event: SQSEvent, context?: Context, callback?
     return Promise.all(sendMessagePromises)
     .catch((error: AWSError) => {
         console.error(error);
+        throw error;
     });
 };
 

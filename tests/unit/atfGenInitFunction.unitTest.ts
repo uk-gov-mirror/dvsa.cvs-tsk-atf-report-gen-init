@@ -21,7 +21,7 @@ describe("retroGenInit  Function",  () => {
   });
 
   describe("when SQService throws error", () => {
-    it("should return undefined", async () => {
+    it("should bubble up the error", async () => {
       StreamService.getVisitsStream = jest.fn().mockReturnValue([{}]);
       const myError = new Error("It Broke!");
       SQService.prototype.sendMessage = jest.fn().mockRejectedValue(myError);
@@ -29,10 +29,8 @@ describe("retroGenInit  Function",  () => {
       expect.assertions(1);
       try {
         const result = await atfGenInit({}, ctx, () => { return; });
-        expect(result).toBe(undefined);
       } catch (e) {
-        // Doesn't currently throw error. Probably should in a future revision
-        // expect(e.message).toEqual(myError.message);
+        expect(e.message).toEqual(myError.message);
       }
     });
   });
