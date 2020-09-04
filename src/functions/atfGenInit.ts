@@ -12,7 +12,7 @@ import {StreamService} from "../services/StreamService";
  * @param context - λ Context
  * @param callback - callback function
  */
-const atfGenInit: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<void | Array<PromiseResult<SendMessageResult, AWSError>>> => {
+const atfGenInit: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<void | Array<PromiseResult<SendMessageResult, AWSError>>> => {
     if (!event) {
         console.error("ERROR: event is not defined.");
         return;
@@ -27,14 +27,17 @@ const atfGenInit: Handler = async (event: SQSEvent, context?: Context, callback?
 
     // Add each visit record to the queue
     records.forEach(async (record: DynamoDBRecord) => {
-            sendMessagePromises.push(sqService.sendMessage(JSON.stringify(record)));
+        sendMessagePromises.push(sqService.sendMessage(JSON.stringify(record)));
     });
 
     return Promise.all(sendMessagePromises)
-    .catch((error: AWSError) => {
-        console.error(error);
-        throw error;
-    });
+        .catch((error: AWSError) => {
+            console.error(error);
+            console.log("records");
+            console.log(records);
+            // Lambda will retry up to X times or until the message expires, after which the message will be sent to the dlq.
+            throw error;
+        });
 };
 
 export {atfGenInit};
