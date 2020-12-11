@@ -16,7 +16,6 @@
     "build:docker": "docker-compose -f docker-compose.yml up -d --build",
     "prepush": "BRANCH=local npm test && npm run tslint && npm run security-checks",
     "predeploy": "npm install && npm run prepush",
-    "security-checks": "git secrets --scan && git log -p | scanrepo",
     "test": "BRANCH=local jest --testMatch=\"**/*.unitTest.ts\" --coverage",
     "test-i": "BRANCH=local jest --testMatch=\"**/*.intTest.ts\" --runInBand --passWithNoTests",
     "tslint": "tslint src/**/*.ts tests/**/*.ts",
@@ -24,6 +23,7 @@
     "coverage": "BRANCH=local SLS_DEBUG=* jest --testMatch=\"**/*.*Test.ts\" --coverage",
     "audit-dep": "npm audit --json | node_modules/.bin/audit-filter --nsp-config=.nsprc --audit=-",
     "package": "mkdir ${ZIP_NAME} && cp package.json package-lock.json ${ZIP_NAME}/ && cp -r .build/src/* ${ZIP_NAME}/ && cd ${ZIP_NAME} && npm ci --production && rm package.json package-lock.json && zip -qr ../${ZIP_NAME}.zip .",
+    "security-checks": "npm audit --audit-level=critical && git secrets --register-aws && git secrets --scan && git log -p | scanrepo",
     "tools-setup": "echo 'nothing to do'"
   },
   "author": "",
