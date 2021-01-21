@@ -26,6 +26,9 @@ node_modules/**
 # Serverless specific files
 .dynamodb/**
 
+# reports files
+.reports
+
 # Build folder
 .build/**
 
